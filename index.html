@@ -163,12 +163,14 @@ textarea::placeholder{color:var(--muted);opacity:.8}
 .rep .m .a{font-size:15px}
 
 
-.priv{margin-top:14px;padding-inline:6px;font-size:13px;color:var(--muted)}
-.priv summary{cursor:pointer;font-weight:500;color:var(--fg);padding:6px 0}
-.priv p{margin:8px 0;line-height:1.45}
 .privbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .privbtns button{font:inherit;font-size:14px;padding:10px 14px;min-height:44px;border-radius:10px;border:1px solid var(--rule);background:var(--paper);color:var(--fg);cursor:pointer}
-.privmsg{min-height:1.2em}
+.privmsg{min-height:1.2em;margin:10px 0 0;font-size:14px;color:var(--muted)}
+.steps{margin:6px 0 0;padding-left:20px;font-size:14px;line-height:1.5;color:var(--fg)}
+.steps li{margin:8px 0}
+.bkbanner{margin-top:18px;padding:12px 14px;border:1px dashed var(--rule);border-radius:12px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.bkbanner p{margin:0;font-size:14px;line-height:1.45;color:var(--fg)}
+.itab{padding-inline:12px}
 footer{margin-top:22px;font-size:13px;color:var(--muted);padding-inline:6px}
 @media (prefers-reduced-motion:no-preference){.itab,.mtab,.chip,.day span.d{transition:background-color .15s,border-color .15s,color .15s}}
 </style>
@@ -180,6 +182,7 @@ footer{margin-top:22px;font-size:13px;color:var(--muted);padding-inline:6px}
     <button class="itab" role="tab" id="vt-today" aria-selected="true">Hoy</button>
     <button class="itab" role="tab" id="vt-week" aria-selected="false">Semana</button>
     <button class="itab" role="tab" id="vt-diary" aria-selected="false">Releer</button>
+    <button class="itab" role="tab" id="vt-backup" aria-selected="false">Copia</button>
   </div>
 
   <div class="book">
@@ -215,6 +218,10 @@ footer{margin-top:22px;font-size:13px;color:var(--muted);padding-inline:6px}
         </div>
         <div id="fields" role="tabpanel"></div>
 
+        <div class="bkbanner" id="bkBanner" hidden>
+          <p id="bkBannerTxt"></p>
+          <button class="pillbtn" id="bkBannerGo" type="button">Guardar copia</button>
+        </div>
         <p class="h2">Últimos días</p>
         <div id="hist"></div>
         <button class="linkbtn" id="toDiary">Releer todo el mes</button>
@@ -242,24 +249,40 @@ footer{margin-top:22px;font-size:13px;color:var(--muted);padding-inline:6px}
         <div id="dBody"></div>
       </div>
 
+      <div id="v-backup" hidden>
+        <p class="sub" id="bk-state"></p>
+
+        <div class="card">
+          <h3>Cambiar de celular</h3>
+          <ol class="steps">
+            <li><b>En el celular viejo:</b> toca <i>Guardar copia</i> y elige una contraseña. Mándate el archivo por AirDrop, WhatsApp, correo o guárdalo en Archivos (iCloud Drive).</li>
+            <li><b>En el celular nuevo:</b> abre el enlace del cuaderno, agrégalo a la pantalla de inicio, entra a esta pestaña y toca <i>Restaurar copia</i>. Elige el archivo y escribe la misma contraseña.</li>
+          </ol>
+          <div class="privbtns">
+            <button type="button" id="bk-exp">Guardar copia</button>
+            <button type="button" id="bk-imp">Restaurar copia</button>
+            <input type="file" id="bk-file" hidden>
+          </div>
+          <p class="privmsg" id="bk-msg" role="status" aria-live="polite"></p>
+        </div>
+
+        <div class="card">
+          <h3>Copia para leer</h3>
+          <p class="sub">Un archivo de texto con todo lo que escribiste, para leerlo o imprimirlo. Ojo: <b>no va cifrado</b>, quien lo tenga puede leerlo.</p>
+          <div class="privbtns"><button type="button" id="bk-txt">Guardar copia en texto</button></div>
+        </div>
+
+        <div class="card">
+          <h3>Privacidad</h3>
+          <p class="sub"><b>Es tuyo, solo tuyo.</b> Esta app no tiene cuentas, no tiene servidor, no usa analítica ni publicidad, y está bloqueada para conectarse a internet: no puede enviar nada. Lo que escribes vive únicamente en este teléfono. Lo único que ve quien aloja la página es que alguien la abrió (la dirección IP), nunca lo que escribes.</p>
+          <p class="sub"><b>Cuidado:</b> si borras los datos del navegador, desinstalas la app o pierdes el teléfono, pierdes el cuaderno. Guarda una copia de vez en cuando. La contraseña de la copia solo la sabes tú: si la olvidas, nadie puede recuperarla.</p>
+        </div>
+      </div>
+
       <div class="status"><span class="s" id="status" role="status" aria-live="polite">Cargando…</span><span id="where"></span></div>
     </div>
   </div>
   <footer id="foot"></footer>
-  <details class="priv" id="priv">
-    <summary>Privacidad y respaldo</summary>
-    <div class="privb">
-      <p><b>Es tuyo, solo tuyo.</b> Esta app no tiene cuentas, no tiene servidor, no usa analítica ni publicidad, y está bloqueada para conectarse a internet: no puede enviar nada. Lo que escribes vive únicamente en este teléfono.</p>
-      <p>Lo único que ve quien aloja la página es que alguien la abrió (la dirección IP), nunca lo que escribes.</p>
-      <p><b>Cuidado:</b> si borras los datos del navegador o pierdes el teléfono, pierdes el cuaderno. Para protegerte, guarda una copia cifrada con una contraseña que solo tú sepas. Si la olvidas, nadie puede recuperarla.</p>
-      <div class="privbtns">
-        <button type="button" id="bk-exp">Guardar copia cifrada</button>
-        <button type="button" id="bk-imp">Restaurar una copia</button>
-        <input type="file" id="bk-file" accept=".json,application/json" hidden>
-      </div>
-      <p class="privmsg" id="bk-msg" role="status" aria-live="polite"></p>
-    </div>
-  </details>
 </div>
 
 <script>
@@ -452,6 +475,7 @@ footer{margin-top:22px;font-size:13px;color:var(--muted);padding-inline:6px}
     var d=parse(state.date);
     $('#dateLbl').textContent=cap(d.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'}));
     $('#todayBtn').hidden=state.date===t;
+    paintBanner();
     $('#tab-am').setAttribute('aria-selected',String(state.tab==='am'));
     $('#tab-pm').setAttribute('aria-selected',String(state.tab==='pm'));
     var wk=$('#week');wk.innerHTML='';
@@ -556,23 +580,24 @@ footer{margin-top:22px;font-size:13px;color:var(--muted);padding-inline:6px}
   /* vistas */
   function setView(v){
     flushAll();state.view=v;
-    ['today','week','diary'].forEach(function(n){
+    ['today','week','diary','backup'].forEach(function(n){
       $('#v-'+n).hidden=(n!==v);
       $('#vt-'+n).setAttribute('aria-selected',String(n===v));
     });
     if(v==='today'){renderFields();paintToday()}
     if(v==='week'){state.wk=monday(state.date);renderWeek()}
     if(v==='diary'){state.month=state.date.slice(0,7);renderDiary()}
+    if(v==='backup'){renderBackup()}
     paintHead();
   }
   function repaint(){
     paintHead();
     if(state.view==='today'){paintToday();if(!typing())renderFields()}
-    else if(!typing()){if(state.view==='week')renderWeek();else renderDiary()}
+    else if(!typing()){if(state.view==='week')renderWeek();else if(state.view==='diary')renderDiary();else if(state.view==='backup')renderBackup()}
   }
 
   /* eventos */
-  ['today','week','diary'].forEach(function(v){$('#vt-'+v).addEventListener('click',function(){if(state.view!==v)setView(v)})});
+  ['today','week','diary','backup'].forEach(function(v){$('#vt-'+v).addEventListener('click',function(){if(state.view!==v)setView(v)})});
   $('#prev').addEventListener('click',function(){goDate(addDays(state.date,-1))});
   $('#next').addEventListener('click',function(){goDate(addDays(state.date,1))});
   $('#todayBtn').addEventListener('click',function(){goDate(today())});
@@ -613,7 +638,26 @@ footer{margin-top:22px;font-size:13px;color:var(--muted);padding-inline:6px}
   }
   start();
 
-  /* respaldo cifrado: AES-GCM + PBKDF2, todo en el teléfono */
+  /* copia de seguridad: cifrada (AES-GCM + PBKDF2) o en texto, todo en el teléfono */
+  function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+  function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+  function allDocs(){try{return JSON.parse(lsGet('conmigo-mismo')||'{}')}catch(e){return {}}}
+  function counts(){var n=0,w=0;Object.keys(state.entries).forEach(function(k){if(has(state.entries[k]))n++});
+    Object.keys(state.weeks).forEach(function(k){if(hasW(state.weeks[k]))w++});return{days:n,weeks:w}}
+  function daysSince(ts){return Math.floor((Date.now()-Number(ts))/86400000)}
+  function bkText(){
+    var c=counts(),last=lsGet('conmigo-mismo-bk');
+    var a=c.days+(c.days===1?' día escrito':' días escritos')+(c.weeks?' y '+c.weeks+(c.weeks===1?' semana':' semanas'):'');
+    var b=last?'Última copia: '+(daysSince(last)<1?'hoy':'hace '+daysSince(last)+(daysSince(last)===1?' día':' días'))+'.':'Todavía no guardaste ninguna copia.';
+    return(c.days||c.weeks?a+'. ':'Aún no hay nada escrito. ')+b;
+  }
+  function renderBackup(){$('#bk-state').textContent=bkText()}
+  function paintBanner(){
+    var c=counts(),last=lsGet('conmigo-mismo-bk'),b=$('#bkBanner');
+    var due=(c.days>=3)&&(!last||daysSince(last)>=14);
+    b.hidden=!due;
+    if(due)$('#bkBannerTxt').textContent=(last?'Hace '+daysSince(last)+' días que no guardas una copia.':'Todavía no guardaste una copia de tu cuaderno.')+' Si cambias de celular o se borran los datos, se pierde todo.';
+  }
   (function(){
     var msg=function(t){$('#bk-msg').textContent=t};
     function b64(buf){var s='',a=new Uint8Array(buf);for(var i=0;i<a.length;i++)s+=String.fromCharCode(a[i]);return btoa(s)}
@@ -623,41 +667,70 @@ footer{margin-top:22px;font-size:13px;color:var(--muted);padding-inline:6px}
         return crypto.subtle.deriveKey({name:'PBKDF2',salt:salt,iterations:310000,hash:'SHA-256'},k,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])})
     }
     function ymd(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)}
+    function deliver(file,okMsg){
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        return navigator.share({files:[file],title:'Conmigo mismo'}).then(function(){return true}).catch(function(e){if(e&&e.name!=='AbortError')msg('No se pudo compartir. Prueba de nuevo.');return false});
+      }
+      var a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;document.body.appendChild(a);a.click();a.remove();
+      return Promise.resolve(true);
+    }
+    function done(ok,t){if(ok){lsSet('conmigo-mismo-bk',String(Date.now()));msg(t);renderBackup();paintBanner()}}
+
     $('#bk-exp').addEventListener('click',function(){
       if(!window.crypto||!crypto.subtle){msg('Este navegador no permite cifrar.');return}
+      if(!counts().days&&!counts().weeks){msg('Todavía no hay nada escrito para guardar.');return}
       var pw=prompt('Elige una contraseña para la copia (mínimo 8 caracteres). Si la olvidas, no se puede recuperar.');
       if(!pw)return;if(pw.length<8){msg('La contraseña debe tener al menos 8 caracteres.');return}
-      var data;try{data=localStorage.getItem('conmigo-mismo')||'{}'}catch(e){data='{}'}
+      var pw2=prompt('Escribe la contraseña otra vez para confirmar.');
+      if(pw2!==pw){msg('Las contraseñas no coinciden. No se guardó la copia.');return}
       var salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
-      key(pw,salt).then(function(k){return crypto.subtle.encrypt({name:'AES-GCM',iv:iv},k,new TextEncoder().encode(data))}).then(function(ct){
+      key(pw,salt).then(function(k){return crypto.subtle.encrypt({name:'AES-GCM',iv:iv},k,new TextEncoder().encode(lsGet('conmigo-mismo')||'{}'))}).then(function(ct){
         var json=JSON.stringify({app:'conmigo-mismo',v:1,salt:b64(salt),iv:b64(iv),data:b64(ct)});
-        var name='conmigo-mismo-'+ymd()+'.json';
-        var file=new File([json],name,{type:'application/json'});
-        if(navigator.canShare&&navigator.canShare({files:[file]})){
-          return navigator.share({files:[file],title:'Copia de Conmigo mismo'}).then(function(){msg('Copia lista. Guárdala en un lugar tuyo (Archivos, tu correo).')}).catch(function(e){if(e&&e.name!=='AbortError')msg('No se pudo compartir la copia.')});
-        }
-        var a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();a.remove();
-        msg('Copia guardada como '+name+'.');
+        var file=new File([json],'conmigo-mismo-'+ymd()+'.json',{type:'application/json'});
+        return deliver(file).then(function(ok){done(ok,'Copia lista. Guárdala en un lugar tuyo (Archivos, correo o AirDrop al celular nuevo).')});
       }).catch(function(){msg('No se pudo crear la copia.')});
     });
+
+    $('#bk-txt').addEventListener('click',function(){
+      if(!confirm('Esta copia NO va cifrada: cualquiera que tenga el archivo puede leerlo. ¿Continuar?'))return;
+      var all=allDocs(),days=Object.keys(all).filter(function(k){return !isWeek(k)}).sort(),weeks=Object.keys(all).filter(isWeek).sort();
+      var out=['CONMIGO MISMO — copia en texto ('+ymd()+')',''];
+      days.forEach(function(k){var e=norm(all[k]);if(!has(e))return;
+        out.push('=== '+k+' ===');
+        if(e.phone)out.push('Celular lejos: sí');if(e.wander)out.push('Divagué 5 a 10 min: sí');
+        [['¿Qué tengo que hacer?',e.am.what],['¿Cómo lo voy a hacer?',e.am.how],['¿Cuándo lo voy a hacer?',e.am.when],['Memo (mañana)',e.am.memo],
+         ['¿Qué hice bien?',e.pm.good],['¿Qué hice mal?',e.pm.bad],['¿Qué podría haber hecho distinto?',e.pm.different],['Memo (noche)',e.pm.memo]].forEach(function(r){if((r[1]||'').trim())out.push(r[0]+'\n'+r[1].trim()+'\n')});
+        out.push('')});
+      weeks.forEach(function(k){var w=normW(all[k]);if(!hasW(w))return;
+        out.push('=== Semana del '+k.slice(2)+' ===');
+        [['Salió bien',w.good],['Salió mal',w.bad],['El camino hacia adelante',w.path]].forEach(function(r){if((r[1]||'').trim())out.push(r[0]+'\n'+r[1].trim()+'\n')});
+        out.push('')});
+      var file=new File([out.join('\n')],'conmigo-mismo-'+ymd()+'.txt',{type:'text/plain'});
+      deliver(file).then(function(ok){if(ok)msg('Copia en texto lista. Recuerda que no va cifrada.')});
+    });
+
     $('#bk-imp').addEventListener('click',function(){$('#bk-file').click()});
     $('#bk-file').addEventListener('change',function(ev){
       var f=ev.target.files&&ev.target.files[0];if(!f)return;
       var r=new FileReader();
       r.onload=function(){
-        var o;try{o=JSON.parse(r.result)}catch(e){msg('Ese archivo no es una copia válida.');return}
-        if(!o||o.app!=='conmigo-mismo'){msg('Ese archivo no es una copia de Conmigo mismo.');return}
+        var o;try{o=JSON.parse(r.result)}catch(e){msg('Ese archivo no es una copia válida. Elige el archivo .json que guardaste.');return}
+        if(!o||o.app!=='conmigo-mismo'||!o.data){msg('Ese archivo no es una copia de Conmigo mismo.');return}
         var pw=prompt('Escribe la contraseña de la copia.');if(!pw)return;
         key(pw,unb64(o.salt)).then(function(k){return crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(o.iv)},k,unb64(o.data))}).then(function(pt){
-          var inc=JSON.parse(new TextDecoder().decode(pt)),cur={};
-          try{cur=JSON.parse(localStorage.getItem('conmigo-mismo')||'{}')}catch(e){}
-          Object.keys(inc).forEach(function(k){cur[k]=inc[k]});
-          localStorage.setItem('conmigo-mismo',JSON.stringify(cur));
-          msg('Copia restaurada. Recargando…');setTimeout(function(){location.reload()},600);
+          var inc=JSON.parse(new TextDecoder().decode(pt)),cur=allDocs(),add=0,upd=0;
+          Object.keys(inc).forEach(function(k){
+            if(!cur[k]){cur[k]=inc[k];add++}
+            else if((inc[k].updatedAt||0)>(cur[k].updatedAt||0)){cur[k]=inc[k];upd++}
+          });
+          lsSet('conmigo-mismo',JSON.stringify(cur));
+          msg('Copia restaurada: '+add+' nuevos'+(upd?' y '+upd+' actualizados':'')+'. Recargando…');
+          setTimeout(function(){location.reload()},900);
         }).catch(function(){msg('Contraseña incorrecta o copia dañada.')});
       };
       r.readAsText(f);ev.target.value='';
     });
+    $('#bkBannerGo').addEventListener('click',function(){setView('backup');window.scrollTo(0,0)});
   })();
   if('serviceWorker' in navigator){try{navigator.serviceWorker.register('sw.js')}catch(e){}}
 })();
