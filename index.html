@@ -171,6 +171,9 @@ textarea::placeholder{color:var(--muted);opacity:.8}
 .bkbanner{margin-top:18px;padding:12px 14px;border:1px dashed var(--rule);border-radius:12px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
 .bkbanner p{margin:0;font-size:14px;line-height:1.45;color:var(--fg)}
 .itab{padding-inline:12px}
+.bklbl{display:block;margin-top:12px;font-size:13px;color:var(--muted)}
+.bkin{display:block;width:100%;margin-top:4px;padding:10px 12px;min-height:44px;font:16px var(--sans,inherit);color:var(--fg);background:var(--paper);border:1px solid var(--rule);border-radius:10px}
+.bkcode{display:block;width:100%;min-height:96px;margin-top:10px;padding:10px 12px;font:16px/1.4 var(--mono);color:var(--fg);background:var(--paper);border:1px dashed var(--rule);border-radius:10px;resize:vertical;word-break:break-all}
 footer{margin-top:22px;font-size:13px;color:var(--muted);padding-inline:6px}
 @media (prefers-reduced-motion:no-preference){.itab,.mtab,.chip,.day span.d{transition:background-color .15s,border-color .15s,color .15s}}
 </style>
@@ -253,23 +256,44 @@ footer{margin-top:22px;font-size:13px;color:var(--muted);padding-inline:6px}
         <p class="sub" id="bk-state"></p>
 
         <div class="card">
-          <h3>Cambiar de celular</h3>
-          <ol class="steps">
-            <li><b>En el celular viejo:</b> toca <i>Guardar copia</i> y elige una contraseña. Mándate el archivo por AirDrop, WhatsApp, correo o guárdalo en Archivos (iCloud Drive).</li>
-            <li><b>En el celular nuevo:</b> abre el enlace del cuaderno, agrégalo a la pantalla de inicio, entra a esta pestaña y toca <i>Restaurar copia</i>. Elige el archivo y escribe la misma contraseña.</li>
-          </ol>
+          <h3>1. Guardar copia</h3>
+          <p class="sub">En el celular viejo. Elige una contraseña y crea la copia. Después tendrás tres formas de guardarla.</p>
+          <label class="bklbl" for="bk-pw">Contraseña (mínimo 8 caracteres)</label>
+          <input class="bkin" id="bk-pw" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false">
+          <label class="bklbl" for="bk-pw2">Repite la contraseña</label>
+          <input class="bkin" id="bk-pw2" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false">
+          <div class="privbtns"><button type="button" id="bk-make">Crear copia</button></div>
+          <p class="privmsg" id="bk-msg" role="status" aria-live="polite"></p>
+          <div id="bk-out" hidden>
+            <div class="privbtns">
+              <button type="button" id="bk-copy">Copiar como texto</button>
+              <button type="button" id="bk-share">Compartir archivo</button>
+              <button type="button" id="bk-dl">Descargar archivo</button>
+            </div>
+            <p class="sub">Lo más fácil: toca <i>Copiar como texto</i> y pégalo en Notas o en un WhatsApp a ti mismo. Esa copia sigue protegida con tu contraseña.</p>
+            <textarea class="bkcode" id="bk-code" readonly aria-label="Texto de la copia"></textarea>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>2. Restaurar copia</h3>
+          <p class="sub">En el celular nuevo: abre el enlace del cuaderno, agrégalo a la pantalla de inicio y entra a esta pestaña. Pega el texto de la copia (o elige el archivo), escribe la contraseña y toca <i>Restaurar</i>.</p>
+          <textarea class="bkcode" id="bk-paste" placeholder="Pega aquí el texto de la copia (empieza con CONMIGO-MISMO:1:)" autocapitalize="none" autocorrect="off" spellcheck="false" aria-label="Texto de la copia a restaurar"></textarea>
+          <label class="bklbl" for="bk-rpw">Contraseña de la copia</label>
+          <input class="bkin" id="bk-rpw" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false">
           <div class="privbtns">
-            <button type="button" id="bk-exp">Guardar copia</button>
-            <button type="button" id="bk-imp">Restaurar copia</button>
+            <button type="button" id="bk-restore">Restaurar</button>
+            <button type="button" id="bk-pick">Elegir archivo…</button>
             <input type="file" id="bk-file" hidden>
           </div>
-          <p class="privmsg" id="bk-msg" role="status" aria-live="polite"></p>
+          <p class="privmsg" id="bk-msg2" role="status" aria-live="polite"></p>
         </div>
 
         <div class="card">
           <h3>Copia para leer</h3>
           <p class="sub">Un archivo de texto con todo lo que escribiste, para leerlo o imprimirlo. Ojo: <b>no va cifrado</b>, quien lo tenga puede leerlo.</p>
           <div class="privbtns"><button type="button" id="bk-txt">Guardar copia en texto</button></div>
+          <p class="privmsg" id="bk-msg3" role="status" aria-live="polite"></p>
         </div>
 
         <div class="card">
@@ -659,7 +683,8 @@ footer{margin-top:22px;font-size:13px;color:var(--muted);padding-inline:6px}
     if(due)$('#bkBannerTxt').textContent=(last?'Hace '+daysSince(last)+' días que no guardas una copia.':'Todavía no guardaste una copia de tu cuaderno.')+' Si cambias de celular o se borran los datos, se pierde todo.';
   }
   (function(){
-    var msg=function(t){$('#bk-msg').textContent=t};
+    var PRE='CONMIGO-MISMO:1:',cur=null;
+    var msg=function(t){$('#bk-msg').textContent=t},msg2=function(t){$('#bk-msg2').textContent=t},msg3=function(t){$('#bk-msg3').textContent=t};
     function b64(buf){var s='',a=new Uint8Array(buf);for(var i=0;i<a.length;i++)s+=String.fromCharCode(a[i]);return btoa(s)}
     function unb64(s){var b=atob(s),a=new Uint8Array(b.length);for(var i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a}
     function key(pw,salt){
@@ -667,30 +692,52 @@ footer{margin-top:22px;font-size:13px;color:var(--muted);padding-inline:6px}
         return crypto.subtle.deriveKey({name:'PBKDF2',salt:salt,iterations:310000,hash:'SHA-256'},k,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])})
     }
     function ymd(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)}
-    function deliver(file,okMsg){
-      if(navigator.canShare&&navigator.canShare({files:[file]})){
-        return navigator.share({files:[file],title:'Conmigo mismo'}).then(function(){return true}).catch(function(e){if(e&&e.name!=='AbortError')msg('No se pudo compartir. Prueba de nuevo.');return false});
-      }
-      var a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;document.body.appendChild(a);a.click();a.remove();
-      return Promise.resolve(true);
+    function legacyCopy(t,ta){var ok=false;try{ta.value=t;ta.focus();ta.select();ta.setSelectionRange(0,t.length);ok=document.execCommand('copy')}catch(e){}return ok}
+    function copyText(t,ta){
+      if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(t).then(function(){return true},function(){return legacyCopy(t,ta)});
+      return Promise.resolve(legacyCopy(t,ta));
     }
-    function done(ok,t){if(ok){lsSet('conmigo-mismo-bk',String(Date.now()));msg(t);renderBackup();paintBanner()}}
+    function download(file){var a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;document.body.appendChild(a);a.click();a.remove()}
+    function shareFile(file,onOk,onFail){
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        navigator.share({files:[file],title:'Conmigo mismo'}).then(onOk).catch(function(e){if(e&&e.name==='AbortError')return;onFail(e&&e.name||'error')});
+      }else onFail('no disponible');
+    }
+    function done(t){lsSet('conmigo-mismo-bk',String(Date.now()));msg(t);renderBackup();paintBanner()}
 
-    $('#bk-exp').addEventListener('click',function(){
+    /* 1. crear la copia cifrada (sin menús: todo se hace con campos visibles) */
+    $('#bk-make').addEventListener('click',function(){
+      var pw=$('#bk-pw').value,pw2=$('#bk-pw2').value,c=counts();
+      $('#bk-out').hidden=true;cur=null;
       if(!window.crypto||!crypto.subtle){msg('Este navegador no permite cifrar.');return}
-      if(!counts().days&&!counts().weeks){msg('Todavía no hay nada escrito para guardar.');return}
-      var pw=prompt('Elige una contraseña para la copia (mínimo 8 caracteres). Si la olvidas, no se puede recuperar.');
-      if(!pw)return;if(pw.length<8){msg('La contraseña debe tener al menos 8 caracteres.');return}
-      var pw2=prompt('Escribe la contraseña otra vez para confirmar.');
-      if(pw2!==pw){msg('Las contraseñas no coinciden. No se guardó la copia.');return}
+      if(!c.days&&!c.weeks){msg('Todavía no hay nada escrito para guardar.');return}
+      if(pw.length<8){msg('La contraseña debe tener al menos 8 caracteres.');return}
+      if(pw!==pw2){msg('Las contraseñas no coinciden.');return}
+      msg('Creando copia…');$('#bk-make').disabled=true;
       var salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
       key(pw,salt).then(function(k){return crypto.subtle.encrypt({name:'AES-GCM',iv:iv},k,new TextEncoder().encode(lsGet('conmigo-mismo')||'{}'))}).then(function(ct){
-        var json=JSON.stringify({app:'conmigo-mismo',v:1,salt:b64(salt),iv:b64(iv),data:b64(ct)});
-        var file=new File([json],'conmigo-mismo-'+ymd()+'.json',{type:'application/json'});
-        return deliver(file).then(function(ok){done(ok,'Copia lista. Guárdala en un lugar tuyo (Archivos, correo o AirDrop al celular nuevo).')});
-      }).catch(function(){msg('No se pudo crear la copia.')});
+        var json=JSON.stringify({app:'conmigo-mismo',v:1,salt:b64(salt),iv:b64(iv),data:b64(ct)}),name='conmigo-mismo-'+ymd()+'.json';
+        cur={name:name,code:PRE+btoa(json),file:new File([json],name,{type:'application/json'})};
+        $('#bk-code').value=cur.code;$('#bk-out').hidden=false;
+        msg('Copia creada ('+c.days+(c.days===1?' día':' días')+'). Ahora guárdala: toca uno de los botones.');
+      }).catch(function(){msg('No se pudo crear la copia.')}).then(function(){$('#bk-make').disabled=false});
+    });
+    $('#bk-copy').addEventListener('click',function(){
+      if(!cur)return;
+      copyText(cur.code,$('#bk-code')).then(function(ok){
+        if(ok)done('Copiado. Pégalo en Notas o en un WhatsApp a ti mismo, y comprueba que quedó guardado.');
+        else msg('No se pudo copiar solo. Mantén presionado el recuadro de abajo, elige Seleccionar todo y luego Copiar.');
+      });
+    });
+    $('#bk-share').addEventListener('click',function(){
+      if(!cur)return;
+      shareFile(cur.file,function(){done('Listo. Comprueba que el archivo quedó donde lo guardaste.')},function(why){msg('El menú de compartir no se abrió ('+why+'). Usa «Copiar como texto».')});
+    });
+    $('#bk-dl').addEventListener('click',function(){
+      if(!cur)return;download(cur.file);msg('Se intentó descargar '+cur.name+'. Si no lo ves en Archivos, usa «Copiar como texto».');
     });
 
+    /* copia en texto legible (sin cifrar) */
     $('#bk-txt').addEventListener('click',function(){
       if(!confirm('Esta copia NO va cifrada: cualquiera que tenga el archivo puede leerlo. ¿Continuar?'))return;
       var all=allDocs(),days=Object.keys(all).filter(function(k){return !isWeek(k)}).sort(),weeks=Object.keys(all).filter(isWeek).sort();
@@ -705,30 +752,36 @@ footer{margin-top:22px;font-size:13px;color:var(--muted);padding-inline:6px}
         out.push('=== Semana del '+k.slice(2)+' ===');
         [['Salió bien',w.good],['Salió mal',w.bad],['El camino hacia adelante',w.path]].forEach(function(r){if((r[1]||'').trim())out.push(r[0]+'\n'+r[1].trim()+'\n')});
         out.push('')});
-      var file=new File([out.join('\n')],'conmigo-mismo-'+ymd()+'.txt',{type:'text/plain'});
-      deliver(file).then(function(ok){if(ok)msg('Copia en texto lista. Recuerda que no va cifrada.')});
+      var text=out.join('\n'),file=new File([text],'conmigo-mismo-'+ymd()+'.txt',{type:'text/plain'});
+      shareFile(file,function(){msg3('Copia en texto lista. Recuerda que no va cifrada.')},function(){
+        copyText(text,$('#bk-code')).then(function(ok){msg3(ok?'No se abrió el menú de compartir, pero el texto quedó copiado: pégalo en Notas. No va cifrado.':'No se pudo copiar el texto.')});
+      });
     });
 
-    $('#bk-imp').addEventListener('click',function(){$('#bk-file').click()});
+    /* 2. restaurar: pegando el texto o eligiendo el archivo */
+    $('#bk-pick').addEventListener('click',function(){$('#bk-file').click()});
     $('#bk-file').addEventListener('change',function(ev){
       var f=ev.target.files&&ev.target.files[0];if(!f)return;
-      var r=new FileReader();
-      r.onload=function(){
-        var o;try{o=JSON.parse(r.result)}catch(e){msg('Ese archivo no es una copia válida. Elige el archivo .json que guardaste.');return}
-        if(!o||o.app!=='conmigo-mismo'||!o.data){msg('Ese archivo no es una copia de Conmigo mismo.');return}
-        var pw=prompt('Escribe la contraseña de la copia.');if(!pw)return;
-        key(pw,unb64(o.salt)).then(function(k){return crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(o.iv)},k,unb64(o.data))}).then(function(pt){
-          var inc=JSON.parse(new TextDecoder().decode(pt)),cur=allDocs(),add=0,upd=0;
-          Object.keys(inc).forEach(function(k){
-            if(!cur[k]){cur[k]=inc[k];add++}
-            else if((inc[k].updatedAt||0)>(cur[k].updatedAt||0)){cur[k]=inc[k];upd++}
-          });
-          lsSet('conmigo-mismo',JSON.stringify(cur));
-          msg('Copia restaurada: '+add+' nuevos'+(upd?' y '+upd+' actualizados':'')+'. Recargando…');
-          setTimeout(function(){location.reload()},900);
-        }).catch(function(){msg('Contraseña incorrecta o copia dañada.')});
-      };
-      r.readAsText(f);ev.target.value='';
+      var r=new FileReader();r.onload=function(){$('#bk-paste').value=String(r.result||'');msg2('Archivo cargado. Escribe la contraseña y toca Restaurar.')};r.readAsText(f);ev.target.value='';
+    });
+    $('#bk-restore').addEventListener('click',function(){
+      var raw=$('#bk-paste').value.trim(),pw=$('#bk-rpw').value,o;
+      if(!raw){msg2('Pega el texto de la copia o elige el archivo.');return}
+      try{var t=raw.replace(/\s+/g,'');o=(t.indexOf(PRE)===0)?JSON.parse(atob(t.slice(PRE.length))):JSON.parse(raw)}catch(e){msg2('Eso no es una copia válida. Revisa que pegaste todo el texto, desde CONMIGO-MISMO:1:');return}
+      if(!o||o.app!=='conmigo-mismo'||!o.data){msg2('Eso no es una copia de Conmigo mismo.');return}
+      if(!pw){msg2('Escribe la contraseña de la copia.');return}
+      if(!window.crypto||!crypto.subtle){msg2('Este navegador no permite descifrar.');return}
+      msg2('Restaurando…');
+      key(pw,unb64(o.salt)).then(function(k){return crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(o.iv)},k,unb64(o.data))}).then(function(pt){
+        var inc=JSON.parse(new TextDecoder().decode(pt)),cur2=allDocs(),add=0,upd=0;
+        Object.keys(inc).forEach(function(k){
+          if(!cur2[k]){cur2[k]=inc[k];add++}
+          else if((inc[k].updatedAt||0)>(cur2[k].updatedAt||0)){cur2[k]=inc[k];upd++}
+        });
+        lsSet('conmigo-mismo',JSON.stringify(cur2));
+        msg2('Copia restaurada: '+add+' nuevos'+(upd?' y '+upd+' actualizados':'')+'. Recargando…');
+        setTimeout(function(){location.reload()},900);
+      }).catch(function(){msg2('Contraseña incorrecta o copia dañada.')});
     });
     $('#bkBannerGo').addEventListener('click',function(){setView('backup');window.scrollTo(0,0)});
   })();
